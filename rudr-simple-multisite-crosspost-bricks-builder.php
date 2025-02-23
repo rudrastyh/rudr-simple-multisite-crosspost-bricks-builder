@@ -6,7 +6,7 @@
  * Network: true
  * Author: Misha Rudrastyh
  * Author URI: https://rudrastyh.com
- * Version: 1.1
+ * Version: 1.2
  */
 
 class Rudr_SMC_Bricks_Builder {
@@ -52,6 +52,12 @@ class Rudr_SMC_Bricks_Builder {
 						foreach( $brick[ 'settings' ][ 'items' ][ 'images' ] as &$image ) {
 							$image = $this->process_image_in_brick( $image, $new_blog_id, $brick[ 'settings' ][ 'items' ][ 'size' ] );
 						}
+					}
+					break;
+				}
+				case 'logo' : {
+					if( ! empty( $brick[ 'settings' ][ 'logo' ] ) ) {
+						$brick[ 'settings' ][ 'logo' ] = $this->process_image_in_brick( $brick[ 'settings' ][ 'logo' ], $new_blog_id );
 					}
 					break;
 				}
