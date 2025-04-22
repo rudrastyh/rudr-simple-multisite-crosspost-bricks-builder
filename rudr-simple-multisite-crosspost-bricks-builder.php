@@ -6,7 +6,7 @@
  * Network: true
  * Author: Misha Rudrastyh
  * Author URI: https://rudrastyh.com
- * Version: 1.2
+ * Version: 1.3
  */
 
 class Rudr_SMC_Bricks_Builder {
@@ -61,6 +61,20 @@ class Rudr_SMC_Bricks_Builder {
 					}
 					break;
 				}
+				// handles only SVG icons (may need to add another one if someone is using images instead of svg)
+        case 'icon' : {
+          if( ! empty( $brick[ 'settings' ][ 'icon' ][ 'svg' ] ) ) {
+            $brick[ 'settings' ][ 'icon' ][ 'svg' ] = $this->process_image_in_brick( $brick[ 'settings' ][ 'icon' ][ 'svg' ], $new_blog_id );
+          }
+          break;
+        }
+        // handles svg element, which is a 'file'
+        case 'svg' : {
+          if( ! empty( $brick[ 'settings' ][ 'file' ] ) ) {
+            $brick[ 'settings' ][ 'file' ] = $this->process_image_in_brick( $brick[ 'settings' ][ 'file' ], $new_blog_id );
+          }
+          break;
+        }
 				default : {
 					// processing background
 					if( ! empty( $brick[ 'settings' ][ '_background' ][ 'image' ] ) ) {
