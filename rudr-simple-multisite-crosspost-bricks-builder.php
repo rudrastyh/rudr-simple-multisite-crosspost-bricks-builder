@@ -6,7 +6,7 @@
  * Network: true
  * Author: Misha Rudrastyh
  * Author URI: https://rudrastyh.com
- * Version: 1.3
+ * Version: 1.4
  */
 
 class Rudr_SMC_Bricks_Builder {
@@ -32,12 +32,37 @@ class Rudr_SMC_Bricks_Builder {
 
 		// we are currently on a new blog by the way, let's remember it and switch back
 		$new_blog_id = get_current_blog_id();
+		// we will need global classes as well
+		$new_blog_global_classes = get_option( 'bricks_global_classes', array() );
+		$new_blog_global_classes_ids = wp_list_pluck( $new_blog_global_classes, 'id' ); 
 		restore_current_blog();
+		$global_classes = get_option( 'bricks_global_classes', array() );
+
 
 		// now we convert the meta key json into an array of elements
-		$bricks = maybe_unserialize( $meta_value );
+		$bricks = wp_slash( maybe_unserialize( $meta_value ) );
 
 		foreach( $bricks as &$brick ) {
+
+			// we need to process global classes right away
+			if( ! empty( $brick[ 'settings' ][ '_cssGlobalClasses' ] ) && is_array( $brick[ 'settings' ][ '_cssGlobalClasses' ] ) ) {
+				foreach( $brick[ 'settings' ][ '_cssGlobalClasses' ] as $class_id ) {
+					// we already have this global class, skip
+					if( in_array( $class_id, $new_blog_global_classes_ids ) ) {
+						continue;
+					}
+					// it is time to extract our global class
+					$class = current( array_filter( $global_classes, function( $class ) use ( $class_id ) {
+						return $class[ 'id' ] === $class_id;
+					} ) );
+
+					// let's add our new global class
+					if( ! empty( $class ) ) {
+						$new_blog_global_classes[] = $class;
+					}
+
+				}
+			}
 
 			switch( $brick[ 'name' ] ) {
 				case 'image' : {
@@ -62,19 +87,19 @@ class Rudr_SMC_Bricks_Builder {
 					break;
 				}
 				// handles only SVG icons (may need to add another one if someone is using images instead of svg)
-        case 'icon' : {
-          if( ! empty( $brick[ 'settings' ][ 'icon' ][ 'svg' ] ) ) {
-            $brick[ 'settings' ][ 'icon' ][ 'svg' ] = $this->process_image_in_brick( $brick[ 'settings' ][ 'icon' ][ 'svg' ], $new_blog_id );
-          }
-          break;
-        }
-        // handles svg element, which is a 'file'
-        case 'svg' : {
-          if( ! empty( $brick[ 'settings' ][ 'file' ] ) ) {
-            $brick[ 'settings' ][ 'file' ] = $this->process_image_in_brick( $brick[ 'settings' ][ 'file' ], $new_blog_id );
-          }
-          break;
-        }
+				case 'icon' : {
+					if( ! empty( $brick[ 'settings' ][ 'icon' ][ 'svg' ] ) ) {
+					$brick[ 'settings' ][ 'icon' ][ 'svg' ] = $this->process_image_in_brick( $brick[ 'settings' ][ 'icon' ][ 'svg' ], $new_blog_id );
+					}
+					break;
+				}
+				// handles svg element, which is a 'file'
+				case 'svg' : {
+					if( ! empty( $brick[ 'settings' ][ 'file' ] ) ) {
+					$brick[ 'settings' ][ 'file' ] = $this->process_image_in_brick( $brick[ 'settings' ][ 'file' ], $new_blog_id );
+					}
+					break;
+				}
 				default : {
 					// processing background
 					if( ! empty( $brick[ 'settings' ][ '_background' ][ 'image' ] ) ) {
@@ -88,6 +113,10 @@ class Rudr_SMC_Bricks_Builder {
 		//file_put_contents( __DIR__ . '/log.txt', print_r( $bricks, true ) );
 		// go back
 		switch_to_blog( $new_blog_id );
+
+		// update global classes on the target blog
+		update_option( 'bricks_global_classes', $new_blog_global_classes );
+
 		return maybe_serialize( $bricks );
 
 	}
